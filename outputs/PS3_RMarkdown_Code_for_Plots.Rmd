@@ -1,0 +1,716 @@
+---
+title: "Parental divorce in Canada shows diminutive effects on children's future relationships"
+author: "Anne Collins, Jennifer Do, Andrea Therese Javellana, and Wijdan Tariq"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Preamble note: this is the code that was used to generate the images seen in the PDF.
+
+### Install the tinytex package if you have not already done so. It helps in producing reading LaTeX code and creating LaTeX-based PDF files. It may take about five to ten minutes to install.
+#tinytex::install_tinytex()
+library(tinytex)
+library(tidyverse)
+library(scales)
+library(gridExtra)
+library(janitor)
+
+# Install the stargazer package for creating beautiful LaTeX tables of statistical output.
+install.packages("stargazer", repos = "https://cran.r-project.org/web/packages/stargazer/")
+library(stargazer)
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Load the gss file that was cleaned and edited using Rohan and Caetano's code, including additional variables.
+
+gss <- read_csv("gss.csv")
+gss_df <- data.frame(gss)
+
+# Create a dummy variable "parents_divorced" which equals to 1 if respondent's parents were divorced.
+gss_df <- gss_df %>% mutate(parents_divorced = ifelse(apardivc == 96, yes = 0, no = 1))
+
+# Create a dummy variable for "ever_married" which equals to 1 if respondent was ever married.
+gss_df <- gss_df %>% mutate(ever_married_dummy = ifelse(ever_married == "Yes", yes = 1, no = 0))
+
+# Create factor levels and labels for parents_divorced_fct variable.
+gss_df <- gss_df %>% mutate(parents_divorced_fct = parents_divorced)
+
+gss_df$parents_divorced_fct = factor(gss_df$parents_divorced_fct, 
+   levels = c(0, 1), 
+   labels = c("Parents not divorced", "Parents divorced")
+   )
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Group by divorced parents. 
+gss_groupby_divorced_parents <- gss_df %>% group_by(gss_df$parents_divorced_fct)
+
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Some descriptive statistics of key variables of interest.
+# gss_groupby_divorced_parents %>% summarise(n = n(), 
+                                           #total_unions=mean(totunc), 
+                                           #total_marriages=mean(number_marriages),
+                                           #total_separations=mean(nsepevr),
+                                           #age=mean(agec),
+                                           #gender_male=mean(is_male),
+                                           #)
+
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Bar charts for respondent income by groups. 
+# We first factor the variable to introduce ordering to it.
+gss_groupby_divorced_parents$income_respondent = factor(gss_groupby_divorced_parents$income_respondent, levels = c("Less than $25,000", "$25,000 to $49,999", "$50,000 to $74,999", "$75,000 to $99,999", 
+              "$100,000 to $ 124,999", "$125,000 and more"))
+
+ggplot(data=gss_groupby_divorced_parents, aes(x = income_respondent, y= ..prop.., group = 1), stat = "count") + geom_bar() + facet_wrap(~parents_divorced_fct) + scale_y_continuous(labels = scales::percent_format()) + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + theme(axis.title.y = element_blank())
+
+
+# Here is some code to display the bars side-by-side.
+#income_table <- table(gss_groupby_divorced_parents$income_respondent,gss_groupby_divorced_parents$parents_divorced_fct)
+#prop_income_table <- prop.table(income_table, 2)
+#prop_income_table_df <- as.data.frame(ftable(prop_income_table))
+#ggplot(prop_income_table_df,aes(Var1,Freq,fill=Var2))+geom_bar(stat="identity",position='dodge')
+
+
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Bar charts for self-rated health.
+# We first factor the variable to introduce ordering to it
+gss_groupby_divorced_parents$self_rated_health = factor(gss_groupby_divorced_parents$self_rated_health, levels = c("Excellent", "Very good", "Good", "Fair", "Poor", "Don't know", NA))
+
+ggplot(data=gss_groupby_divorced_parents, aes(x = self_rated_health, y= ..prop.., group = 1), stat = "count") + geom_bar() + facet_wrap(~parents_divorced_fct) + scale_y_continuous(labels = scales::percent_format()) + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + theme(axis.title.y = element_blank())
+
+ggsave("health.png")
+
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Histograms for self-rated mental health
+# We first factor the variable to introduce ordering to it
+gss_groupby_divorced_parents$self_rated_mental_health = factor(gss_groupby_divorced_parents$self_rated_mental_health, levels = c("Excellent", "Very good", "Good", "Fair", "Poor", "Don't know", NA))
+
+ggplot(data=gss_groupby_divorced_parents, aes(x = self_rated_mental_health, y= ..prop.., group = 1), stat = "count") + geom_bar() + facet_wrap(~parents_divorced_fct) + scale_y_continuous(labels = scales::percent_format()) + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + theme(axis.title.y = element_blank())
+
+ggsave("mental_health.png")
+
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Frequency density histograms of age distribution.
+
+ggplot(data=gss_groupby_divorced_parents, aes(x = agec, fill = parents_divorced_fct)) + geom_density(alpha=0.3) + theme(axis.title.x=element_blank()) + labs(title="Age of respondent at time of survey") + theme(plot.title=element_text(hjust = 0.5, size = 14))
+
+ggsave("age_density_plot.png")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Bar chart for marital status.
+# We first factor the variable to introduce ordering to it
+gss_groupby_divorced_parents$marital_status = 
+  factor(gss_groupby_divorced_parents$marital_status, 
+         levels = c("Single, never married", "Married", "Living common-law", "Divorced", "Separated",
+         "Widowed", NA))
+
+ggplot(data=gss_groupby_divorced_parents, aes(x = marital_status, y= ..prop.., group = 1), stat = "count") + geom_bar() + facet_wrap(~parents_divorced_fct) + scale_y_continuous(labels = scales::percent_format()) + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + theme(axis.title.y = element_blank()) + theme(axis.title.x=element_blank())
+
+ggsave("marital_status.png")
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Bar chart for marital status.
+# We first factor the variable to introduce ordering to it
+gss_groupby_divorced_parents$marital_status = 
+  factor(gss_groupby_divorced_parents$marital_status, 
+         levels = c("Single, never married", "Married", "Living common-law", "Divorced", "Separated",
+         "Widowed", NA))
+
+ggplot(data=gss_groupby_divorced_parents, aes(x = marital_status, y= ..prop.., group = 1), stat = "count") + geom_bar() + facet_wrap(~parents_divorced_fct) + scale_y_continuous(labels = scales::percent_format()) + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + theme(axis.title.y = element_blank())
+
+ggsave("marital_status.png")
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Bar chart for provinces.
+
+ggplot(data=gss_groupby_divorced_parents, aes(x = province, y= ..prop.., group = 1), stat = "count") + geom_bar() + facet_wrap(~parents_divorced_fct) + scale_y_continuous(labels = scales::percent_format()) + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + theme(axis.title.y = element_blank())
+
+ggsave("provinces.png")
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Total number of children intending to have.
+
+gss_groupby_divorced_parents %>% filter(!is.na(number_total_children_intention)) %>% summarise (n=n(), mean=mean(number_total_children_intention))
+
+gss_groupby_divorced_parents %>% filter(!is.na(number_total_children_intention)) %>% ggplot(aes(x = number_total_children_intention, y= ..prop.., group = 1), stat = "count") + geom_bar() + facet_wrap(~parents_divorced_fct) + scale_y_continuous(labels = scales::percent_format()) + theme(axis.text.x = element_text(vjust = 1, hjust=1)) + theme(axis.title.y = element_blank())
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Group mean for age at first marriage.
+
+gss_groupby_divorced_parents %>% filter(!is.na(age_at_first_marriage)) %>% summarise (n=n(), mean=mean(age_at_first_marriage), median=median(age_at_first_marriage))
+
+gss_groupby_divorced_parents %>% filter(!is.na(age_at_first_marriage)) %>% ggplot(aes(x = age_at_first_marriage, fill = parents_divorced_fct)) + geom_density(alpha=0.3)
+
+ggsave("age_at_first_marriage_density.png")
+
+# Note: we multiply by 2 (the bin width) because the y-axis is a density, not a percentage, i.e. the area integrates to 1. 
+
+gss_groupby_divorced_parents %>% filter(!is.na(age_at_first_marriage)) %>% ggplot(aes(x = age_at_first_marriage, group=parents_divorced_fct)) + geom_histogram(aes(y=stat(density)*2), binwidth = 2)+scale_y_continuous(labels=percent) + facet_wrap(~parents_divorced_fct, ncol=2) + theme(axis.title.y = element_blank())
+
+ggsave("age_at_first_marriage_histogram.png")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Group mean for age at first birth.
+
+gss_groupby_divorced_parents %>% filter(!is.na(age_at_first_birth)) %>% summarise (n=n(), mean=mean(age_at_first_birth), median=median(age_at_first_birth))
+
+gss_groupby_divorced_parents %>% filter(!is.na(age_at_first_birth)) %>% ggplot(aes(x = age_at_first_birth, fill = parents_divorced_fct)) + geom_density(alpha=0.3)
+
+ggsave("age_at_first_birth_density.png")
+
+
+gss_groupby_divorced_parents %>% filter(!is.na(age_at_first_birth)) %>% ggplot(aes(x = age_at_first_birth, group=parents_divorced_fct)) + geom_histogram(aes(y=stat(density)*2), binwidth = 2)+scale_y_continuous(labels=percent) + facet_wrap(~parents_divorced_fct, ncol=2) + theme(axis.title.y = element_blank())
+
+ggsave("age_at_first_birth_histogram.png")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Respondent expects to marry or re-marry.
+
+# We first add factor labels to the variable.
+
+#gss_groupby_divorced_parents$wevermar = factor(gss_groupby_divorced_parents$wevermar, levels = c(1, 2, 3, 4, 5, 6, 7, 8, 9), labels = c("Definitely Yes", "Probably Yes", "Probably Not", "No, Definitely not", "Unsure", "Valid skip", "Don't know", "Refusal", "Not stated"))
+
+#ggplot(data=gss_groupby_divorced_parents, aes(x = wevermar, y= ..prop.., group = 1), stat = "count") + geom_bar() + facet_wrap(~parents_divorced_fct) + scale_y_continuous(labels = scales::percent_format()) + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + theme(axis.title.y = element_blank())
+
+# Create new df to filter only for responses of "definitely yes", "probably yes", "definitely not", "probably no".
+#yes_no_intention_to_marry <- gss_groupby_divorced_parents %>% filter(wevermar<=4)
+
+# Here is a relevant dummy variable for this that will be useful for regressions.
+#yes_no_intention_to_marry <- yes_no_intention_to_marry %>% mutate(expects_marry_dummy=ifelse(wevermar<=2, yes=1, no=0))
+
+#yes_no_intention_to_marry$wevermar = factor(yes_no_intention_to_marry$wevermar, levels = c(1, 2, 3, 4), labels = c("Definitely Yes", "Probably Yes", "Probably Not", "No, Definitely not"))
+
+# Proportion tables for question on whether respondent expects to marry or re-marry.
+
+#expect_to_marry_table <- table(yes_no_intention_to_marry$wevermar,yes_no_intention_to_marry$parents_divorced_fct)
+
+#prop_expect_to_marry_table <- prop.table(expect_to_marry_table, 2)
+
+#prop_expect_to_marry_df <- as.data.frame(ftable(prop_expect_to_marry_table))
+
+#yes_no_intention_to_marry %>% ggplot(aes(x = wevermar, y= ..prop.., group = 1), stat = "count") + geom_bar() + facet_wrap(~parents_divorced_fct) + scale_y_continuous(labels = scales::percent_format()) + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + theme(axis.title.y = element_blank()) + labs(title="Respondent expects to marry or re-marry") + theme(plot.title=element_text(hjust = 0.5, size = 14))
+
+#ggsave("expects_to_marry.png")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Education.
+ggplot(data=gss_groupby_divorced_parents, aes(x = education, y= ..prop.., group = 1), stat = "count") + geom_bar() + facet_wrap(~parents_divorced_fct) + scale_y_continuous(labels = scales::percent_format()) + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + theme(axis.title.y = element_blank())
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Feelings on life.
+gss_groupby_divorced_parents %>% filter(!is.na(feelings_life)) %>% summarise (n=n(), mean=mean(feelings_life), median=median(feelings_life))
+
+gss_groupby_divorced_parents %>% filter(!is.na(feelings_life)) %>% ggplot(aes(x = feelings_life, y= ..prop.., group = 1), stat = "count") + geom_bar() + facet_wrap(~parents_divorced_fct) + scale_y_continuous(labels = scales::percent_format()) + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + theme(axis.title.y = element_blank()) + labs(title="Feelings about life") + theme(plot.title=element_text(hjust = 0.5, size = 14))
+
+ggsave("feelings_about_life.png")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Aboriginal?
+ggplot(data=gss_groupby_divorced_parents, aes(x = aboriginal, y= ..prop.., group = 1), stat = "count") + geom_bar() + facet_wrap(~parents_divorced_fct) + scale_y_continuous(labels = scales::percent_format()) + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + theme(axis.title.y = element_blank())
+
+ggsave("aboriginal.png")
+
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Religious affiliation?
+ggplot(data=gss_groupby_divorced_parents, aes(x = religion_has_affiliation
+, y= ..prop.., group = 1), stat = "count") + geom_bar() + facet_wrap(~parents_divorced_fct) + scale_y_continuous(labels = scales::percent_format()) + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + theme(axis.title.y = element_blank()) + theme(axis.title.x=element_blank()) + labs(title="Respondent's religious affiliation") + theme(plot.title=element_text(hjust = 0.5, size = 14))
+
+ggsave("religious_affiliation.png")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Visible minority?
+
+gss_groupby_divorced_parents %>% filter(!is.na(vis_minority)) %>% ggplot(aes(x = vis_minority, y= ..prop.., group = 1), stat = "count") + geom_bar() + facet_wrap(~parents_divorced_fct) + scale_y_continuous(labels = scales::percent_format()) + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + theme(axis.title.y = element_blank()) + labs(title="Visible minority") + theme(plot.title=element_text(hjust = 0.5, size = 14)) + theme(axis.title.y = element_blank()) + theme(axis.title.x=element_blank())
+
+ggsave("visible_minority.png")
+
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Place of birth - Canada?
+
+gss_groupby_divorced_parents %>% filter(!is.na(place_birth_canada)) %>% ggplot(aes(x = place_birth_canada, y= ..prop.., group = 1), stat = "count") + geom_bar() + facet_wrap(~parents_divorced_fct) + scale_y_continuous(labels = scales::percent_format()) + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + theme(axis.title.y = element_blank()) + labs(title="Respondent place of birth") + theme(plot.title=element_text(hjust = 0.5, size = 14)) + theme(axis.title.y = element_blank()) + theme(axis.title.x=element_blank())
+
+ggsave("place_birth_canada.png")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Hold joint bank accounts?
+
+gss_groupby_divorced_parents %>% ggplot(aes(x = com_200, y= ..prop.., group = 1), stat = "count") + geom_bar() + facet_wrap(~parents_divorced_fct) + scale_y_continuous(labels = scales::percent_format()) + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + theme(axis.title.y = element_blank()) + labs(title="Joint bank account's?") + theme(plot.title=element_text(hjust = 0.5, size = 14)) + theme(axis.title.y = element_blank()) + theme(axis.title.x=element_blank())
+
+ggsave("joint_bank_accounts.png")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Contact with mother?
+
+gss_groupby_divorced_parents %>% filter(lam_50<=5) %>% ggplot(aes(x = lam_50, y= ..prop.., group = 1), stat = "count") + geom_bar() + facet_wrap(~parents_divorced_fct) + scale_y_continuous(labels = scales::percent_format()) + theme(axis.text.x = element_text(vjust = 1, hjust=1)) + theme(axis.title.y = element_blank()) + labs(title="Contact with mother? (Lower score means more frequent contact)") + theme(plot.title=element_text(hjust = 0.5, size = 14)) + theme(axis.title.y = element_blank()) + theme(axis.title.x=element_blank())
+
+ggsave("mother_contact.png")
+
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Contact with father?
+
+gss_groupby_divorced_parents %>% filter(laf_50<=5) %>% ggplot(aes(x = laf_50, y= ..prop.., group = 1), stat = "count") + geom_bar() + facet_wrap(~parents_divorced_fct) + scale_y_continuous(labels = scales::percent_format()) + theme(axis.text.x = element_text(vjust = 1, hjust=1)) + theme(axis.title.y = element_blank()) + labs(title="Contact with father? (Lower score means more frequent contact)") + theme(plot.title=element_text(hjust = 0.5, size = 14)) + theme(axis.title.y = element_blank()) + theme(axis.title.x=element_blank())
+
+ggsave("father_contact.png")
+
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Number of separations/divorces.
+
+gss_groupby_divorced_parents %>% ggplot(aes(x = nsepevr, y= ..prop.., group = 1), stat = "count") + geom_bar() + facet_wrap(~parents_divorced_fct) + scale_y_continuous(labels = scales::percent_format()) + theme(axis.text.x = element_text(vjust = 1, hjust=1)) + theme(axis.title.y = element_blank()) + labs(title="Number of separations/divorces respondent has had.") + theme(plot.title=element_text(hjust = 0.5, size = 14)) + theme(axis.title.y = element_blank()) + theme(axis.title.x=element_blank())
+
+ggsave("number_of_separations_divorces.png")
+
+```
+
+
+```{r, echo=FALSE, fig.align='center', out.width = '100%'}
+knitr::include_graphics("descriptive_statistics.png")
+```
+
+**Figure 1: Current marital status.**
+```{r, echo=FALSE, fig.align='center', out.width = '100%'}
+knitr::include_graphics("marital_status.png")
+```
+
+**Figure 2: Number of separations/divorces respondent has had.**
+```{r, echo=FALSE, fig.align='center', out.width = '90%'}
+knitr::include_graphics("number_of_separations_divorces.png")
+```
+
+**Figure 3: Age at first marriage.**
+```{r, echo=FALSE, fig.align='center', out.width = '90%'}
+knitr::include_graphics("age_at_first_marriage_table.png")
+```
+
+**Figure 4: Density curve for age at first marriage.**
+```{r, echo=FALSE, fig.align='center', out.width = '90%'}
+knitr::include_graphics("age_at_first_marriage_density.png")
+```
+
+**Figure 5: Age at child’s first birth.**
+```{r, echo=FALSE, fig.align='center', out.width = '90%'}
+knitr::include_graphics("age_at_first_birth_table.png")
+```
+
+**Figure 6: Density plot for age at first child’s birth.**
+```{r, echo=FALSE, fig.align='center', out.width = '90%'}
+knitr::include_graphics("age_at_first_birth_density.png")
+```
+
+**Figure 7: Histogram of respondent’s age at birth of first child.**
+```{r, echo=FALSE, fig.align='center', out.width = '90%'}
+knitr::include_graphics("age_at_first_birth_histogram.png")
+```
+
+**Figure 8: Whether respondent expects to marry (or re-marry).**
+```{r, echo=FALSE, fig.align='center', out.width = '90%'}
+knitr::include_graphics("expects_to_marry.png")
+```
+
+**Figure 9: Respondent’s feelings about life.**
+```{r, echo=FALSE, fig.align='center', out.width = '90%'}
+knitr::include_graphics("feelings_about_life.png")
+```
+
+**Figure 10: Distribution of parental divorce across Canadian Provinces.**
+```{r, echo=FALSE, fig.align='center', out.width = '90%'}
+knitr::include_graphics("provinces.png")
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Preparing for OLS regressions. 
+# First, we create a new, tidy dataframe using only the variables that we will need.
+
+gss_regression_df <- data.frame(gss)
+gss_regression_df <- gss_regression_df %>% mutate(parents_divorced = ifelse(apardivc == 96, yes = 0, no = 1))
+gss_regression_df <- gss_regression_df %>% mutate(ever_married_dummy = ifelse(ever_married == "Yes", yes = 1, ifelse(ever_married == "No", yes = 0, no = NA)))
+
+gss_regression_df <- gss_regression_df %>% 
+   select(parents_divorced, agec, is_male, marital_status, apardivc, lam_50, laf_50, totunc, 
+          number_marriages, nsepevr, legmarst, ever_married, ever_married_dummy, evercl, age_diff,
+          age_at_first_marriage, adivma1c, wevermar, mic_120, ever_fathered_child, ever_given_birth,
+          total_children, age_at_first_birth, future_children_intention, number_total_children_intention,
+          education, partner_education, self_rated_health, self_rated_mental_health, feelings_life,
+          citizenship_status, aboriginal, vis_minority, religion_has_affiliation, income_respondent,
+          income_family
+          )
+
+# Rename some variables.
+
+gss_regression_df <- gss_regression_df %>% 
+   clean_names() %>% 
+   rename(age_respondent = agec,
+         age_parents_divorced = apardivc,
+         mother_contact = lam_50, 
+         father_contact = laf_50, 
+         total_unions = totunc,
+         number_separations = nsepevr, 
+         legal_marital_status = legmarst,
+         ever_in_common_law = evercl,
+         age_at_first_divorce = adivma1c,
+         will_ever_marry = wevermar,
+         will_marry_current_partner = mic_120)
+
+gss_regression_df <- gss_regression_df %>% mutate(parents_divorced_dummy = parents_divorced)
+
+gss_regression_df$parents_divorced = factor(gss_regression_df$parents_divorced, 
+   levels = c(0, 1), 
+   labels = c("Parents not divorced", "Parents divorced")
+   )
+
+# Some more clean-up. The variables mother_contact and father_contact are ordinal, with lower numbers corresponding to more frequent contact with parent. The scale is from 1-5. We recode values of 6 or more as NA.
+gss_regression_df$mother_contact[gss_regression_df$mother_contact == 6] <- NA
+gss_regression_df$mother_contact[gss_regression_df$mother_contact == 7] <- NA
+gss_regression_df$mother_contact[gss_regression_df$mother_contact == 8] <- NA
+gss_regression_df$mother_contact[gss_regression_df$mother_contact == 9] <- NA
+
+# We do the same for the father_contact variable.
+gss_regression_df$father_contact[gss_regression_df$father_contact == 6] <- NA
+gss_regression_df$father_contact[gss_regression_df$father_contact == 7] <- NA
+gss_regression_df$father_contact[gss_regression_df$father_contact == 8] <- NA
+gss_regression_df$father_contact[gss_regression_df$father_contact == 9] <- NA
+
+# Need to clean up age_at_first_divorce variable. 
+gss_regression_df$age_at_first_divorce[gss_regression_df$age_at_first_divorce == 99.6] <- NA
+gss_regression_df$age_at_first_divorce[gss_regression_df$age_at_first_divorce == 99.7] <- NA
+gss_regression_df$age_at_first_divorce[gss_regression_df$age_at_first_divorce == 99.8] <- NA
+
+# Need to clean up age_parents_divorced variable.
+gss_regression_df$age_parents_divorced[gss_regression_df$age_parents_divorced == 96] <- NA
+gss_regression_df$age_parents_divorced[gss_regression_df$age_parents_divorced == 97] <- NA
+gss_regression_df$age_parents_divorced[gss_regression_df$age_parents_divorced == 98] <- NA
+gss_regression_df$age_parents_divorced[gss_regression_df$age_parents_divorced == 99] <- NA
+
+# Create dummy variables for frequent mother contact and frequent father contact.
+# We consider daily, weekly, or monthly visits as "frequent" (i.e. dummy value = 1). Else, infrequent (= 0).
+gss_regression_df <- gss_regression_df %>% mutate(frequent_mother_contact = mother_contact)
+gss_regression_df <- gss_regression_df %>% mutate(frequent_father_contact = father_contact)
+gss_regression_df <- gss_regression_df %>% mutate(frequent_mother_contact = ifelse(frequent_mother_contact <= 3, yes = 1, no = 0))
+gss_regression_df <- gss_regression_df %>% mutate(frequent_father_contact = ifelse(frequent_father_contact <= 3, yes = 1, no = 0))
+
+# Convert self_rated_health to numeric variables. Lower values indicate better health.
+gss_regression_df$self_rated_health[gss_regression_df$self_rated_health == "Excellent"] <- 1
+gss_regression_df$self_rated_health[gss_regression_df$self_rated_health == "Very good"] <- 2
+gss_regression_df$self_rated_health[gss_regression_df$self_rated_health == "Good"] <- 3
+gss_regression_df$self_rated_health[gss_regression_df$self_rated_health == "Fair"] <- 4
+gss_regression_df$self_rated_health[gss_regression_df$self_rated_health == "Poor"] <- 5
+gss_regression_df$self_rated_health[gss_regression_df$self_rated_health == "Don't know"] <- NA
+gss_regression_df$self_rated_health <- as.numeric(gss_regression_df$self_rated_health)
+
+# Convert self_rated_mental_health to numeric variables. Lower values indicate better mental health.
+gss_regression_df$self_rated_mental_health[gss_regression_df$self_rated_mental_health == "Excellent"] <- 1
+gss_regression_df$self_rated_mental_health[gss_regression_df$self_rated_mental_health == "Very good"] <- 2
+gss_regression_df$self_rated_mental_health[gss_regression_df$self_rated_mental_health == "Good"] <- 3
+gss_regression_df$self_rated_mental_health[gss_regression_df$self_rated_mental_health == "Fair"] <- 4
+gss_regression_df$self_rated_mental_health[gss_regression_df$self_rated_mental_health == "Poor"] <- 5
+gss_regression_df$self_rated_mental_health[gss_regression_df$self_rated_mental_health == "Don't know"] <- NA
+gss_regression_df$self_rated_mental_health <- as.numeric(gss_regression_df$self_rated_mental_health)
+
+# Create dummy variable for being aboriginal.
+gss_regression_df <- gss_regression_df %>% mutate(aboriginal_dummy = aboriginal)
+gss_regression_df <- gss_regression_df %>% mutate(aboriginal_dummy = ifelse(aboriginal_dummy == "Yes", yes = 1, no = 0))
+
+# Create dummy variable for being Canadian at birth.
+gss_regression_df <- gss_regression_df %>% mutate(canadian_at_birth_dummy = citizenship_status)
+gss_regression_df <- gss_regression_df %>% mutate(canadian_at_birth_dummy = ifelse(canadian_at_birth_dummy == "By birth", yes = 1, no = 0))
+
+# Create dummy variable for being visible minority.
+gss_regression_df <- gss_regression_df %>% mutate(minority_dummy = vis_minority)
+gss_regression_df <- gss_regression_df %>% mutate(minority_dummy = ifelse(minority_dummy == "Visible minority", yes = 1, no = 0))
+
+# Create dummy variable for being religious affiliation.
+gss_regression_df <- gss_regression_df %>% mutate(has_religion = religion_has_affiliation)
+gss_regression_df <- gss_regression_df %>% mutate(has_religion = ifelse(has_religion == "Has religious affiliation", yes = 1, no = 0))
+
+# Convert income variables to numeric.
+gss_regression_df$income_respondent[gss_regression_df$income_respondent == "Less than $25,000"] <- 1
+gss_regression_df$income_respondent[gss_regression_df$income_respondent == "$25,000 to $49,999"] <- 2
+gss_regression_df$income_respondent[gss_regression_df$income_respondent == "$50,000 to $74,999"] <- 3
+gss_regression_df$income_respondent[gss_regression_df$income_respondent == "$75,000 to $99,999"] <- 4
+gss_regression_df$income_respondent[gss_regression_df$income_respondent == "$100,000 to $ 124,999"] <- 5
+gss_regression_df$income_respondent[gss_regression_df$income_respondent == "$125,000 and more"] <- 6
+gss_regression_df$income_respondent <- as.numeric(gss_regression_df$income_respondent)
+
+gss_regression_df$income_family[gss_regression_df$income_family == "Less than $25,000"] <- 1
+gss_regression_df$income_family[gss_regression_df$income_family == "$25,000 to $49,999"] <- 2
+gss_regression_df$income_family[gss_regression_df$income_family == "$50,000 to $74,999"] <- 3
+gss_regression_df$income_family[gss_regression_df$income_family == "$75,000 to $99,999"] <- 4
+gss_regression_df$income_family[gss_regression_df$income_family == "$100,000 to $ 124,999"] <- 5
+gss_regression_df$income_family[gss_regression_df$income_family == "$125,000 and more"] <- 6
+gss_regression_df$income_family <- as.numeric(gss_regression_df$income_family)
+
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Some independent t-tests. These are summarized in report as an image file.
+test_age <- t.test(gss_regression_df$age_respondent  ~ gss_regression_df$parents_divorced)
+test_number_unions <- t.test(gss_regression_df$total_unions  ~ gss_regression_df$parents_divorced)
+test_number_marriages <- t.test(gss_regression_df$number_marriages  ~ gss_regression_df$parents_divorced)
+test_number_separations <- t.test(gss_regression_df$number_separations  ~ gss_regression_df$parents_divorced)
+test_age_at_first_marriage <- t.test(gss_regression_df$age_at_first_marriage  ~ gss_regression_df$parents_divorced)
+test_age_at_first_birth <- t.test(gss_regression_df$age_at_first_birth  ~ gss_regression_df$parents_divorced)
+test_number_total_children_intention <- t.test(gss_regression_df$number_total_children_intention  ~ gss_regression_df$parents_divorced)
+test_total_children <- t.test(gss_regression_df$total_children  ~ gss_regression_df$parents_divorced)
+test_mother_contact <- t.test(gss_regression_df$mother_contact  ~ gss_regression_df$parents_divorced)
+test_father_contact <- t.test(gss_regression_df$father_contact  ~ gss_regression_df$parents_divorced)
+test_age_at_first_divorce <- t.test(gss_regression_df$age_at_first_divorce ~ gss_regression_df$parents_divorced)
+test_self_rated_health <- t.test(gss_regression_df$self_rated_health ~ gss_regression_df$parents_divorced)
+test_self_rated_mental_health <- t.test(gss_regression_df$self_rated_mental_health ~ gss_regression_df$parents_divorced)
+test_feelings_life <- t.test(gss_regression_df$feelings_life ~ gss_regression_df$parents_divorced)
+test_aboriginal <- t.test(gss_regression_df$aboriginal_dummy ~ gss_regression_df$parents_divorced)
+test_canadian_at_birth <- t.test(gss_regression_df$canadian_at_birth_dummy ~ gss_regression_df$parents_divorced)
+test_visible_minority <- t.test(gss_regression_df$minority_dummy ~ gss_regression_df$parents_divorced)
+test_has_religion <- t.test(gss_regression_df$has_religion ~ gss_regression_df$parents_divorced)
+test_income_respondent <- t.test(gss_regression_df$income_respondent ~ gss_regression_df$parents_divorced)
+test_income_family <- t.test(gss_regression_df$income_family ~ gss_regression_df$parents_divorced)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# We now run some OLS regressions.
+
+total_unions_reg <- lm(gss_regression_df$total_unions ~ gss_regression_df$parents_divorced_dummy +
+                           gss_regression_df$age_respondent + gss_regression_df$is_male +
+                           gss_regression_df$self_rated_mental_health +
+                           gss_regression_df$frequent_father_contact + 
+                           gss_regression_df$frequent_mother_contact +
+                           gss_regression_df$aboriginal_dummy +
+                           gss_regression_df$canadian_at_birth_dummy +
+                           gss_regression_df$minority_dummy +
+                           gss_regression_df$has_religion + 
+                           gss_regression_df$income_respondent)
+
+number_marriages_reg <- lm(gss_regression_df$number_marriages ~ gss_regression_df$parents_divorced_dummy +
+                           gss_regression_df$age_respondent + gss_regression_df$is_male +
+                           gss_regression_df$self_rated_mental_health +
+                           gss_regression_df$frequent_father_contact + 
+                           gss_regression_df$frequent_mother_contact +
+                           gss_regression_df$aboriginal_dummy +
+                           gss_regression_df$canadian_at_birth_dummy +
+                           gss_regression_df$minority_dummy +
+                           gss_regression_df$has_religion + 
+                           gss_regression_df$income_respondent)
+
+number_separations_reg <- lm(gss_regression_df$number_separations ~ gss_regression_df$parents_divorced_dummy +
+                           gss_regression_df$age_respondent + gss_regression_df$is_male +
+                           gss_regression_df$self_rated_mental_health +
+                           gss_regression_df$frequent_father_contact + 
+                           gss_regression_df$frequent_mother_contact +
+                           gss_regression_df$aboriginal_dummy +
+                           gss_regression_df$canadian_at_birth_dummy +
+                           gss_regression_df$minority_dummy +
+                           gss_regression_df$has_religion + 
+                           gss_regression_df$income_respondent)
+
+age_first_marriage_reg <- lm(gss_regression_df$age_at_first_marriage ~ 
+                                gss_regression_df$parents_divorced_dummy +
+                                gss_regression_df$age_respondent + 
+                                gss_regression_df$is_male + 
+                                gss_regression_df$self_rated_mental_health +
+                                gss_regression_df$frequent_father_contact + 
+                                gss_regression_df$frequent_mother_contact +
+                                gss_regression_df$aboriginal_dummy +
+                                gss_regression_df$canadian_at_birth_dummy +
+                                gss_regression_df$minority_dummy +
+                                gss_regression_df$has_religion + 
+                                gss_regression_df$income_respondent)
+
+age_first_divorce_reg <- lm(gss_regression_df$age_at_first_divorce ~ 
+                                gss_regression_df$parents_divorced_dummy +
+                                gss_regression_df$age_respondent + 
+                                gss_regression_df$is_male + 
+                                gss_regression_df$self_rated_mental_health +
+                                gss_regression_df$frequent_father_contact + 
+                                gss_regression_df$frequent_mother_contact +
+                                gss_regression_df$aboriginal_dummy +
+                                gss_regression_df$canadian_at_birth_dummy +
+                                gss_regression_df$minority_dummy +
+                                gss_regression_df$has_religion + 
+                                gss_regression_df$income_respondent)
+
+age_first_birth_reg <- lm(gss_regression_df$age_at_first_birth ~ 
+                                gss_regression_df$parents_divorced_dummy +
+                                gss_regression_df$age_respondent + 
+                                gss_regression_df$is_male + 
+                                gss_regression_df$self_rated_mental_health +
+                                gss_regression_df$frequent_father_contact + 
+                                gss_regression_df$frequent_mother_contact +
+                                gss_regression_df$aboriginal_dummy +
+                                gss_regression_df$canadian_at_birth_dummy +
+                                gss_regression_df$minority_dummy +
+                                gss_regression_df$has_religion + 
+                                gss_regression_df$income_respondent)
+
+
+```
+
+
+```{r, echo = FALSE, results = 'asis'}
+stargazer(total_unions_reg, number_marriages_reg, number_separations_reg, type='latex',
+          header=FALSE, 
+          title='OLS regression results suggest that parental divorce affects relationship behavior of offspring.', 
+          dep.var.labels=c('Number of unions', 'Number of marriages', 'Number of separations'),
+          report=('vc*p'),
+          digits=4,
+          digits.extra=1, 
+          notes.align = "c"
+          )
+```
+
+
+```{r, echo = FALSE, results = 'asis'}
+stargazer(age_first_marriage_reg, age_first_divorce_reg, age_first_birth_reg, type='latex',
+          header=FALSE, 
+          title='OLS regression results suggest that parental divorce does not seem to affect the relationship timing of offspring.', 
+          dep.var.labels=c('Age at first marriage', 'Age at first divorce', 'Age at first birth'),
+          report=('vc*p'),
+          digits=4,
+          digits.extra=1, 
+          notes.align = "c"
+          )
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# We now run some logit regressions. 
+# First, we prepare the dependent variables of interest.
+# The first variable we create is "divorced_separated_dummy" which equals to 1 if divorced/separated, and 0 if married.
+gss_regression_df <- gss_regression_df %>% mutate(divorced_separated_dummy = legal_marital_status)
+gss_regression_df$divorced_separated_dummy[gss_regression_df$divorced_separated_dummy == 1] <- 0
+gss_regression_df$divorced_separated_dummy[gss_regression_df$divorced_separated_dummy == 2] <- 1
+gss_regression_df$divorced_separated_dummy[gss_regression_df$divorced_separated_dummy == 3] <- 1
+gss_regression_df$divorced_separated_dummy[gss_regression_df$divorced_separated_dummy == 4] <- NA
+gss_regression_df$divorced_separated_dummy[gss_regression_df$divorced_separated_dummy == 5] <- NA
+gss_regression_df$divorced_separated_dummy[gss_regression_df$divorced_separated_dummy == 7] <- NA
+
+# Next, we convert "will_ever_marry" to a dummy variable which equals to 1 if respondent said definitely or probably yes, and 0 if respondent said definitely or probably no.
+gss_regression_df <- gss_regression_df %>% mutate(will_marry_dummy = will_ever_marry)
+gss_regression_df$will_marry_dummy[gss_regression_df$will_marry_dummy == 2] <- 1
+gss_regression_df$will_marry_dummy[gss_regression_df$will_marry_dummy == 3] <- 0
+gss_regression_df$will_marry_dummy[gss_regression_df$will_marry_dummy == 4] <- 0
+gss_regression_df$will_marry_dummy[gss_regression_df$will_marry_dummy == 5] <- NA
+gss_regression_df$will_marry_dummy[gss_regression_df$will_marry_dummy == 6] <- NA
+gss_regression_df$will_marry_dummy[gss_regression_df$will_marry_dummy == 7] <- NA
+gss_regression_df$will_marry_dummy[gss_regression_df$will_marry_dummy == 8] <- NA
+gss_regression_df$will_marry_dummy[gss_regression_df$will_marry_dummy == 9] <- NA
+
+# Then, we run the logit models.
+marital_status_logit <- glm(gss_regression_df$divorced_separated_dummy ~
+                               gss_regression_df$parents_divorced_dummy +
+                                gss_regression_df$age_respondent + 
+                                gss_regression_df$is_male + 
+                                gss_regression_df$self_rated_mental_health +
+                                gss_regression_df$frequent_father_contact + 
+                                gss_regression_df$frequent_mother_contact +
+                                gss_regression_df$aboriginal_dummy +
+                                gss_regression_df$canadian_at_birth_dummy +
+                                gss_regression_df$minority_dummy +
+                                gss_regression_df$has_religion + 
+                                gss_regression_df$income_respondent,
+                            family = binomial())
+
+ever_married_logit <- glm(gss_regression_df$ever_married_dummy ~
+                               gss_regression_df$parents_divorced_dummy +
+                                gss_regression_df$age_respondent + 
+                                gss_regression_df$is_male + 
+                                gss_regression_df$self_rated_mental_health +
+                                gss_regression_df$frequent_father_contact + 
+                                gss_regression_df$frequent_mother_contact +
+                                gss_regression_df$aboriginal_dummy +
+                                gss_regression_df$canadian_at_birth_dummy +
+                                gss_regression_df$minority_dummy +
+                                gss_regression_df$has_religion + 
+                                gss_regression_df$income_respondent,
+                            family = binomial())
+
+will_marry_logit <- glm(gss_regression_df$will_marry_dummy ~
+                               gss_regression_df$parents_divorced_dummy +
+                                gss_regression_df$age_respondent + 
+                                gss_regression_df$is_male + 
+                                gss_regression_df$self_rated_mental_health +
+                                gss_regression_df$frequent_father_contact + 
+                                gss_regression_df$frequent_mother_contact +
+                                gss_regression_df$aboriginal_dummy +
+                                gss_regression_df$canadian_at_birth_dummy +
+                                gss_regression_df$minority_dummy +
+                                gss_regression_df$has_religion + 
+                                gss_regression_df$income_respondent,
+                            family = binomial())
+
+```
+
+
+```{r, echo = FALSE, results = 'asis'}
+stargazer(marital_status_logit, ever_married_logit, will_marry_logit, type='latex',
+          header=FALSE, 
+          title='Logit model results. In model (1), dependent variable takes the value of 0 if respondent is married, and a value of 1 if respondent is currently divorced or separated. Results suggest that that parental divorce does not affect current likelihood of respondent being divorced, nor does it affect the intention to ever get married. However, there is some evidence that parental divorce affects the likelihood that a respondent was ever previously married at the time of the survey.', 
+          dep.var.labels=c('Currently divorced/separated', 'Ever married', 'Intention to ever marry'),
+          report=('vc*p'),
+          digits=4,
+          digits.extra=1, 
+          notes.align = "c"
+          )
+```
+
