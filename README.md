@@ -1,5 +1,5 @@
 # Investigating the effects of parental divorce on Canadians and their marital qualities 
-In this paper, we implement an ordinary least squares regressions (OLS) model to investigate the effects of parental divorce on Canadians. Based on the 2017 General Social Survey (GSS), we examine several variables related to marital and fertility behaviours to gauge impacts due to parental divorce.
+In this paper, we implement an ordinary least squares regressions (OLS) model to investigate the effects of parental divorce on Canadians based on the 2017 General Social Survey (GSS).
 
 ## Note on file structure
 'inputs' folder is where the raw data files should go. The data file that was used in this study was retrieved from the 2017 (Cycle 31) General Social Survey (GSS) from Statistics Canada. 
