@@ -1,0 +1,572 @@
+---
+title: "Parental divorce in Canada shows diminutive effects on children's future relationships"
+author: "Anne Collins, Jennifer Do, Andrea Therese Javellana, and Wijdan Tariq"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Preamble: This is the code to generate the PDF report and to generate the regression results. For the code to generate the graphs and figures, please see the other file titled "PS3_Markdown_Master.Rmd".
+
+### Install the tinytex package if you have not already done so. It helps in producing reading LaTeX code and creating LaTeX-based PDF files. It may take about five to ten minutes to install.
+#tinytex::install_tinytex()
+library(tinytex)
+library(tidyverse)
+library(scales)
+library(gridExtra)
+library(janitor)
+
+# Install the stargazer package for creating beautiful LaTeX tables of statistical output.
+install.packages("stargazer", repos = "https://cran.r-project.org/web/packages/stargazer/")
+library(stargazer)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Load the gss file that was cleaned and edited using Rohan and Caetano's code, including additional variables.
+
+gss <- read_csv("gss.csv")
+```
+
+# Abstract
+
+We used data from the 2017 General Social Survey of twenty thousand Canadians over fifteen years of age, in order to investigate the effects of parental divorce on Canadians and their marital qualities. We examined several variables such as intent to marry, age at first marriage, and age at first childbirth between respondents with married parents and divorced parents then subsequently implemented ordinary least squares regressions to infer results. Our multivariate analysis reveals mixed results. Parental divorce is associated with lower number of lifetime marriages, higher number of unions, and higher number of separations. However, contrary to other international studies, we find no evidence that parental divorce in Canada affects the timing of major relationship outcomes in offspring, such as the age of first marriage. This suggests that in Canada, the effects of parental divorce on offspring’s future relationships is not as pronounced as have been scientifically documented globally.
+
+# Introduction
+
+Divorce rates in Canada have been steadily increasing over the past two decades to the point where a sizable thirty-eight percent of marriages ended in divorce in 2019. During the COVID-19 pandemic, it is said that this number is expected to spike (Stevenson, 2020). Knowing this, it is more important than ever to consider the consequences parental divorce holds over Canadians which was the purpose of designing this study. Prior research indicates a divorce has strong negative implications for a child's future (Amato at al., 1991, p 46), but with Canada’s high quality of life regardless of parental marriage status, we hypothesized that the ramifications of divorce seen elsewhere are limited when examined in a Canadian context.
+
+Internationally, past research suggests that parental divorce can affect a child’s own marital characteristics and health, but there has yet to be conclusive studies on this topic done in Canada. Larger studies outside of Canada have seen trends where those from divorced homes get married either earlier or later than average (Amato, 1996, p.629), have less favourable expectations about the quality of future marriage but are averagely optimistic about the likelihood of getting married (Boyer-Pennington et al., 2001, p. 72), and have negatively affected mental health as adults (Cherlin et al., 1998, p. 247). 
+
+We used data from the 2017 General Social Survey, to measure and track those same variables across twenty thousand Canadians and cultivated a more holistic narrative by incorporating and measuring respondents’ current marital status, number of marriages, number of separations, and age at first childbirth. Bar graphs, histograms, and summary tables were added to conceptualize the differences between divorced homes and intact homes on specific variables to further support the variables that were chosen as input for our model. These variables were then consolidated into an OLS regression model to observe the overall impact of parental divorce. This model was chosen because of its ability to predict the outcomes of respondents based on several independent variables.
+
+Final results from our model indicated Canadians exhibit many of the same scientifically documented characteristics caused by parental divorce, but they are meager in magnitude. Canadians from divorced homes do in fact have an apparently lowered mental health, but the variation in variables such as age at marriage, age at first birth, number of unions, and number of separations were found to be quite faint compared to Canadians from intact marriages.  Ironically, Canadians who have experienced parental divorce had stronger intentions to marry in the future. Altogether, this report reveals Canadian’s can somewhat withstand, and even contradict, the widely recorded negative consequences and trends thought to be a by-product of parental divorce.
+
+# Data
+
+This study was completed using the results of the 2017 (Cycle 31) General Social Survey (GSS) from Statistics Canada on the topic of Canadian families. This survey obtained data from 20,602 respondents across several hundred variables, with a response rate of 52.4%. Respondents were contacted over the phone and surveyed using computer-assisted telephone interviewing (CATI). The sample frame included all individuals over the age of 15 living in the 10 Canadian provinces who are not full-time residents of an institution.
+
+The 2017 GSS sample frame was formed by linking datasets of all Canadian telephone numbers to the Address Register (AR). This allowed surveyors to account for multiple telephone numbers linked to one address, as well as seek the most viable telephone number for addresses with multiple numbers. Phone numbers not linked to the AR were also included to ensure coverage. An important feature of this linkage is the inclusion of “cell phone only” households, a subset of the population not covered by previous frames. “Cell phone only” households represent a growing proportion of the population and this inclusion is important for ensuring more complete and even coverage of households.
+
+Within this dataset, addresses were then stratified according to geographic distribution across 27 strata grouped according to census metropolitan area (CMA). The CMAs of St. John’s, Halifax, Saint John, Montreal, Quebec City, Toronto, Ottawa, Hamilton, Winnipeg, Regina, Saskatoon, Calgary, Edmonton and Vancouver each formed their own strata, while three more strata were formed by grouping together the other CMAs (except Moncton) in each of Quebec, British Columbia, and Ontario. The non-CMA areas in each of the 10 provinces were grouped to form the final 10 strata. Random sampling without replacement was conducted within each stratum to determine the specific households to be contacted, and again once households had been contacted to select a specific respondent.
+
+In cases of partial non-response, Statistics Canada was able to model propensity to respond based on available data. It was found that non-respondents were more likely to be male and more likely to be younger (Statistics Canada, 2020). This is troubling for our study as age and gender may be factors in how an individual is impacted by parental divorce and we must rely on a non-representative sample (although responses were weighted to account for this under representation).
+
+There are a few key features of the GSS that stand out as particularly strengths or weaknesses in its methodology. As previously mentioned, the dataset for the 2017 GSS was able to encompass “cell phone only” households which greatly increased coverage of the population. Due to Statistics Canada’s access to supplementary datasets, tax data linkage was also possible for 83.1% of respondents in place of requesting income data directly. This represents an important step in ensuring data accuracy.
+
+Some weaknesses can be found in the coverage of the GSS’s sample frame. Primarily, the frame only covers members of the Canadian population residing in provinces, and excludes those living in the territories (Yukon Territory, Northwest Territories, and Nunavut). This is also the case with all other GSS topics and surveys, with the exception of the GSS on Victimization (“General Social Survey: An Overview, 2019”, 2019). Although the territories house only a small proportion of the Candian population, their exclusion from the GSS means any study based on its data is unable to account for potentially unique patterns emerging within this subset of the population. It is also important to note that, although linking various datasets is an asset in data quality and overall population coverage, there are still over or under coverage issues that may emerge from this practice. For example, phone numbers without an official linkage to an address in the AR were included in the sample frame, however it is possible that these numbers may still connect to an individual who is affiliated with an address in the AR despite no legal connection. This results in certain households with a higher selection likelihood in what is intended to be a simple random sample with uniform probabilities. We also see that “cell phone only” households were less likely to respond overall, and thus simply including these households in the dataset to increase coverage is insufficient in ensuring appropriate representation in survey respondents.
+
+The following variables were chosen for the modelling involved in this study: age at time of survey interview (AGEC), gender (SEX), age when parents divorced (APARDIVC), contact with mother in the past 12 months (LAM_50), contact with father in the past 12 months (LAF_50), self rated mental health (SRH_115), citizenship status (BRP_19), aboriginal status (AMB_01), visible minority status (VISMIN) religious affiliation (RELIGFLG), income (TTLINCG2), total number of unions (TOTUNC), total number of marriages (NMAREVRC), number of seperations/divorces respondent has had (NSEPEVR), age at first marriage (AGEMA1C), age at first divorce (ADIVMA1C), and age at the birth of their first child (ACHB1C). The scope and depth of the GSS ensures that there are several variables relating to each of these that may have potentially proved useful in our analysis. This subset of the data was chosen to ensure a high number of respondents relevant to each variable (for example, more people are eligible to respond to questions concerning a first divorce than a third divorce) as well as to correspond to related literature concerning the impact of parental divorce on children. 
+
+Our main variable of interest was age of respondent when his/her parents divorced which was used as an indicator of whether or not a respondent’s parents were divorced. Since such an indicator was not explicitly included within the dataset, it was extracted from responses to “Age of respondent when parents divorced”. A valid skip of this question indicated that the respondent’s parents were not legally divorced, and a response indicated that the respondent’s parents were divorced. Other data manipulations are discussed in the “Model” section.
+
+# Model
+
+For the purposes of this study, we chose to run separate ordinary least squares (OLS) regressions in R to gauge the impact of parental divorce on six dependent variables related to marital and fertility behaviours: number of unions, number of marriages, number of separations, age at first marriage, age at first divorce, and age at first birth. An OLS regression is a method of predicting the outcome of one variable based on one or several independent variables by minimizing the sum of the squared differences between the predicted values and observed values, and we used such a regression to predict the aforementioned variables from a variety of social factors influencing marital and familial habits.
+
+The general specification we tested was: 
+```{r, echo=FALSE, fig.align='center', out.width = '40%'}
+knitr::include_graphics("equation.png")
+```
+
+As mentioned previously, our independent variable of highest interest is parental divorce, an indicator variable indicating the marital status of the respondent’s parents. This was entered into the models first as a categorical variable with a value of 1 indicating a respondent with divorced parents.
+
+In each of the models we tested, the left-hand-side variables were different measures of relationship behavior. In the six models we tested, these dependent variables included: number of unions, number of marriages, number of separations, age at first marriage, age at first divorce, and age on the birth of first child.
+
+Of the other independent variables in question--represented in the equation as the control variables *X*--gender (is_male), aboriginal status (aboriginal_dummy), nationality at birth (canadian_at_birth_dummy), visible minority status (minority_dummy), and religious affiliation (has_religion) were all inputted as categorical variables with a value of 1 indicating a respondent with the identity in question. These were manipulated from their initial forms in the GSS data to take the form of an indicator variable where applicable. Age (age_respondent) was inputted as a numeric variable as the GSS collected data accurate to one year and we aimed to examine whether age would impact the models on a year to year basis. Self-rated mental health (self_rated_mental_health), respondent’s frequency of contact with their father and mother in the past 12 months (frequent_father_contact and frequent_mother_contact respectively), and income (income_respondent) are represented as scales in the data but were treated in our models as continuous with the assumption of linearity for sake of simplicity (Williams, 2019). 
+
+These variables were selected and maintained in the model based on prior literature indicating they may have influence over adult quality of life and the marital habits we are discussing in this study (Amato & Booth, 1991, pp. 901-902; Lawton & Bures, 2002). It was also important to maintain consistency in the variables used for direct comparison between all models and relevant literature, regardless of each variables’ individual significance within a given model. We chose to keep several models (six OLS, three logistics) for our final analysis to examine a variety of perspectives and indicators of marital and familial tendencies.
+
+In addition to an OLS regression, we also conducted a logistic regression to predict likelihood of current marital status, of ever having been married, and of stating intent to marry on the same independent variables. This regression is included in Appendix 1 for reference, but is not included in our main analysis as we wished to consider unions and families more holistically in terms of ages and numbers than as binary, one time decisions.
+
+# Results
+
+Based on the GSS data, we observe that the majority of respondents have parents who are not divorced (87.2%) in contrast to the 12.8% of respondents whose parents are divorced. We observe that responses based on gender between the two groups (parents divorced vs parents not divorced) are similar, with approximately 45% of male and 55% of female respondents. We observed that based on age, the mean age for respondents was younger among the group with parents divorced by nearly 10 years, in comparison to respondents among the group with parents not divorced. Table 0 shows detailed descriptive statistics for our control variables grouped by our key variable of interest. We will return to elaborate on Table 0 more in our discussion section.
+
+```{r, echo=FALSE, fig.align='center', out.width = '100%'}
+knitr::include_graphics("descriptive_statistics.png")
+```
+
+**Figure 1: Current marital status.**
+```{r, echo=FALSE, fig.align='center', out.width = '100%'}
+knitr::include_graphics("marital_status.png")
+```
+
+It is observed that though the greatest proportion in both groups of respondents were currently married, respondents with non-parental divorce, were more likely to be married, as opposed to being single and never married. Respondents with divorced parents had higher likelihoods of being single and never married, as well as living in common-law relationships. It is also noted that respondents whose parents were not divorced experienced higher proportions of being widowed. This is expected as this follows the trend of higher proportions of marriage and potentially widowing among the non-divorced parents group. Overall, despite the parent’s marital status of either being divorced or not, this does not seem to have a difference on the proportion of divorced marital status among the respondents. 
+
+\newpage
+**Figure 2: Number of separations/divorces respondent has had.**
+```{r, echo=FALSE, fig.align='center', out.width = '90%'}
+knitr::include_graphics("number_of_separations_divorces.png")
+```
+
+Based on the data, it is observed that between both groups, trends are similar with most respondents having never experienced a divorce/separation with the lowest proportions observed among 2 or more divorces. However, proportions for 0 divorces by the respondents are greater among respondents who had not experienced parental divorce compared to respondents who had experienced parental divorce. Slightly greater proportions of respondents who had experienced 1 or more divorce(s)/separations were observed to have experienced parental divorce. 
+
+**Figure 3: Age at first marriage.**
+```{r, echo=FALSE, fig.align='center', out.width = '90%'}
+knitr::include_graphics("age_at_first_marriage_table.png")
+```
+
+Regarding age at first marriage, we observe that there is not much difference between the two groups with regards to mean and median age. Between both groups, the mean age is approximately 24 years, and median age being slightly younger between 22-23 years.
+
+\newpage
+**Figure 4: Density curve for age at first marriage.**
+```{r, echo=FALSE, fig.align='center', out.width = '90%'}
+knitr::include_graphics("age_at_first_marriage_density.png")
+```
+
+To better illustrate the data from Figure 3, we observe that there is a greater density of respondents at approximately (age 24) whose parents were not divorced, in contrast to the respondents who have divorced parents. The plot may suggest that children of divorced parents may be likely to get married slightly later in life compared to children of non-divorced parents.
+
+**Figure 5: Age at child’s first birth.**
+```{r, echo=FALSE, fig.align='center', out.width = '90%'}
+knitr::include_graphics("age_at_first_birth_table.png")
+```
+
+From the data, we observe that there is not much of a difference between respondents who have divorced parents and those who do not have divorced parents based on their age at which they had their first child. The mean and median age for both groups are approximately 26 to 27 years of age. 
+
+\newpage
+**Figure 6: Density plot for age at first child’s birth.**
+```{r, echo=FALSE, fig.align='center', out.width = '90%'}
+knitr::include_graphics("age_at_first_birth_density.png")
+```
+
+To better illustrate the data from Figure 5, from this plot we are able to observe that there exists a higher density of respondents who have non-divorced parents who gave birth to their first child at a later age. As well, we observe a bimodal distribution in density for respondents who have divorced parents, as they had either given birth earlier (~age 24), or later (~age 28) in comparison to respondents of non-divorced parents. Despite, the table showcasing a similar mean and median age for which the respondents had their first births between the two groups. 
+
+\newpage
+**Figure 7: Histogram of respondent’s age at birth of first child.**
+```{r, echo=FALSE, fig.align='center', out.width = '90%'}
+knitr::include_graphics("age_at_first_birth_histogram.png")
+```
+
+We observe that there exists a bimodal distribution for age at which respondents give birth to their first child, among respondents with divorced parents as opposed to a unimodal distribution among respondents with non-divorced parents. Children of non-divorced parents on average, give birth to their first child at age 26. Children of divorced parents may give birth to their first child at a younger age (age 24) compared to children of non-divorced parents. However, it may be noted that children of divorced parents may also give birth to their first child at a later age (age 28)
+
+\newpage
+**Figure 8: Whether respondent expects to marry (or re-marry).**
+```{r, echo=FALSE, fig.align='center', out.width = '90%'}
+knitr::include_graphics("expects_to_marry.png")
+```
+We observe that children of non-divorced parents are significantly more likely to intend not to get married or remarried compared to children of divorced parents. A greater proportion of children with divorced parents plan to marry. This may be due to the older age of respondents in the group of non-divorced parents, and younger age for respondents with divorced parents. 
+
+\newpage
+**Figure 9: Respondent’s feelings about life.**
+```{r, echo=FALSE, fig.align='center', out.width = '90%'}
+knitr::include_graphics("feelings_about_life.png")
+```
+When regarding satisfaction levels with life, the majority of respondents have responded as 7.5/10 (10 = most satisfied, 0 = not satisfied at all). However, it is observed that respondents of divorced parents were less likely to respond with a satisfaction of 10, as opposed to respondents of non-divorced parents. Between the two groups, there does not seem to be a significant difference with regards to feelings of satisfaction towards life. 
+
+\newpage
+**Figure 10: Distribution of parental divorce across Canadian Provinces.**
+```{r, echo=FALSE, fig.align='center', out.width = '90%'}
+knitr::include_graphics("provinces.png")
+```
+
+Observing the trend for parental divorce across Canada, it is noted that between the two groups, there exists similar trends, with Ontario having the highest proportion (30%) for respondents who have experienced parental divorce, followed by Quebec, British Columbia and Alberta. Despite there being a slightly greater proportion for parental divorce in British Columbia and Alberta among respondents who experienced parental divorce, opposed to respondents who had not experienced parental divorce, the trends remain similar. It must be noted that Canadian Territories were not surveyed in the GSS.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+
+# Preparing for OLS regressions. 
+# First, we create a new, tidy dataframe using only the variables that we will need.
+
+gss_regression_df <- data.frame(gss)
+gss_regression_df <- gss_regression_df %>% mutate(parents_divorced = ifelse(apardivc == 96, yes = 0, no = 1))
+gss_regression_df <- gss_regression_df %>% mutate(ever_married_dummy = ifelse(ever_married == "Yes", yes = 1, ifelse(ever_married == "No", yes = 0, no = NA)))
+
+gss_regression_df <- gss_regression_df %>% 
+   select(parents_divorced, agec, is_male, marital_status, apardivc, lam_50, laf_50, totunc, 
+          number_marriages, nsepevr, legmarst, ever_married, ever_married_dummy, evercl, age_diff,
+          age_at_first_marriage, adivma1c, wevermar, mic_120, ever_fathered_child, ever_given_birth,
+          total_children, age_at_first_birth, future_children_intention, number_total_children_intention,
+          education, partner_education, self_rated_health, self_rated_mental_health, feelings_life,
+          citizenship_status, aboriginal, vis_minority, religion_has_affiliation, income_respondent,
+          income_family
+          )
+
+# Rename some variables.
+
+gss_regression_df <- gss_regression_df %>% 
+   clean_names() %>% 
+   rename(age_respondent = agec,
+         age_parents_divorced = apardivc,
+         mother_contact = lam_50, 
+         father_contact = laf_50, 
+         total_unions = totunc,
+         number_separations = nsepevr, 
+         legal_marital_status = legmarst,
+         ever_in_common_law = evercl,
+         age_at_first_divorce = adivma1c,
+         will_ever_marry = wevermar,
+         will_marry_current_partner = mic_120)
+
+gss_regression_df <- gss_regression_df %>% mutate(parents_divorced_dummy = parents_divorced)
+
+gss_regression_df$parents_divorced = factor(gss_regression_df$parents_divorced, 
+   levels = c(0, 1), 
+   labels = c("Parents not divorced", "Parents divorced")
+   )
+
+# Some more clean-up. The variables mother_contact and father_contact are ordinal, with lower numbers corresponding to more frequent contact with parent. The scale is from 1-5. We recode values of 6 or more as NA.
+gss_regression_df$mother_contact[gss_regression_df$mother_contact == 6] <- NA
+gss_regression_df$mother_contact[gss_regression_df$mother_contact == 7] <- NA
+gss_regression_df$mother_contact[gss_regression_df$mother_contact == 8] <- NA
+gss_regression_df$mother_contact[gss_regression_df$mother_contact == 9] <- NA
+
+# We do the same for the father_contact variable.
+gss_regression_df$father_contact[gss_regression_df$father_contact == 6] <- NA
+gss_regression_df$father_contact[gss_regression_df$father_contact == 7] <- NA
+gss_regression_df$father_contact[gss_regression_df$father_contact == 8] <- NA
+gss_regression_df$father_contact[gss_regression_df$father_contact == 9] <- NA
+
+# Need to clean up age_at_first_divorce variable. 
+gss_regression_df$age_at_first_divorce[gss_regression_df$age_at_first_divorce == 99.6] <- NA
+gss_regression_df$age_at_first_divorce[gss_regression_df$age_at_first_divorce == 99.7] <- NA
+gss_regression_df$age_at_first_divorce[gss_regression_df$age_at_first_divorce == 99.8] <- NA
+
+# Need to clean up age_parents_divorced variable.
+gss_regression_df$age_parents_divorced[gss_regression_df$age_parents_divorced == 96] <- NA
+gss_regression_df$age_parents_divorced[gss_regression_df$age_parents_divorced == 97] <- NA
+gss_regression_df$age_parents_divorced[gss_regression_df$age_parents_divorced == 98] <- NA
+gss_regression_df$age_parents_divorced[gss_regression_df$age_parents_divorced == 99] <- NA
+
+# Create dummy variables for frequent mother contact and frequent father contact.
+# We consider daily, weekly, or monthly visits as "frequent" (i.e. dummy value = 1). Else, infrequent (= 0).
+gss_regression_df <- gss_regression_df %>% mutate(frequent_mother_contact = mother_contact)
+gss_regression_df <- gss_regression_df %>% mutate(frequent_father_contact = father_contact)
+gss_regression_df <- gss_regression_df %>% mutate(frequent_mother_contact = ifelse(frequent_mother_contact <= 3, yes = 1, no = 0))
+gss_regression_df <- gss_regression_df %>% mutate(frequent_father_contact = ifelse(frequent_father_contact <= 3, yes = 1, no = 0))
+
+# Convert self_rated_health to numeric variables. Lower values indicate better health.
+gss_regression_df$self_rated_health[gss_regression_df$self_rated_health == "Excellent"] <- 1
+gss_regression_df$self_rated_health[gss_regression_df$self_rated_health == "Very good"] <- 2
+gss_regression_df$self_rated_health[gss_regression_df$self_rated_health == "Good"] <- 3
+gss_regression_df$self_rated_health[gss_regression_df$self_rated_health == "Fair"] <- 4
+gss_regression_df$self_rated_health[gss_regression_df$self_rated_health == "Poor"] <- 5
+gss_regression_df$self_rated_health[gss_regression_df$self_rated_health == "Don't know"] <- NA
+gss_regression_df$self_rated_health <- as.numeric(gss_regression_df$self_rated_health)
+
+# Convert self_rated_mental_health to numeric variables. Lower values indicate better mental health.
+gss_regression_df$self_rated_mental_health[gss_regression_df$self_rated_mental_health == "Excellent"] <- 1
+gss_regression_df$self_rated_mental_health[gss_regression_df$self_rated_mental_health == "Very good"] <- 2
+gss_regression_df$self_rated_mental_health[gss_regression_df$self_rated_mental_health == "Good"] <- 3
+gss_regression_df$self_rated_mental_health[gss_regression_df$self_rated_mental_health == "Fair"] <- 4
+gss_regression_df$self_rated_mental_health[gss_regression_df$self_rated_mental_health == "Poor"] <- 5
+gss_regression_df$self_rated_mental_health[gss_regression_df$self_rated_mental_health == "Don't know"] <- NA
+gss_regression_df$self_rated_mental_health <- as.numeric(gss_regression_df$self_rated_mental_health)
+
+# Create dummy variable for being aboriginal.
+gss_regression_df <- gss_regression_df %>% mutate(aboriginal_dummy = aboriginal)
+gss_regression_df <- gss_regression_df %>% mutate(aboriginal_dummy = ifelse(aboriginal_dummy == "Yes", yes = 1, no = 0))
+
+# Create dummy variable for being Canadian at birth.
+gss_regression_df <- gss_regression_df %>% mutate(canadian_at_birth_dummy = citizenship_status)
+gss_regression_df <- gss_regression_df %>% mutate(canadian_at_birth_dummy = ifelse(canadian_at_birth_dummy == "By birth", yes = 1, no = 0))
+
+# Create dummy variable for being visible minority.
+gss_regression_df <- gss_regression_df %>% mutate(minority_dummy = vis_minority)
+gss_regression_df <- gss_regression_df %>% mutate(minority_dummy = ifelse(minority_dummy == "Visible minority", yes = 1, no = 0))
+
+# Create dummy variable for being religious affiliation.
+gss_regression_df <- gss_regression_df %>% mutate(has_religion = religion_has_affiliation)
+gss_regression_df <- gss_regression_df %>% mutate(has_religion = ifelse(has_religion == "Has religious affiliation", yes = 1, no = 0))
+
+# Convert income variables to numeric.
+gss_regression_df$income_respondent[gss_regression_df$income_respondent == "Less than $25,000"] <- 1
+gss_regression_df$income_respondent[gss_regression_df$income_respondent == "$25,000 to $49,999"] <- 2
+gss_regression_df$income_respondent[gss_regression_df$income_respondent == "$50,000 to $74,999"] <- 3
+gss_regression_df$income_respondent[gss_regression_df$income_respondent == "$75,000 to $99,999"] <- 4
+gss_regression_df$income_respondent[gss_regression_df$income_respondent == "$100,000 to $ 124,999"] <- 5
+gss_regression_df$income_respondent[gss_regression_df$income_respondent == "$125,000 and more"] <- 6
+gss_regression_df$income_respondent <- as.numeric(gss_regression_df$income_respondent)
+
+gss_regression_df$income_family[gss_regression_df$income_family == "Less than $25,000"] <- 1
+gss_regression_df$income_family[gss_regression_df$income_family == "$25,000 to $49,999"] <- 2
+gss_regression_df$income_family[gss_regression_df$income_family == "$50,000 to $74,999"] <- 3
+gss_regression_df$income_family[gss_regression_df$income_family == "$75,000 to $99,999"] <- 4
+gss_regression_df$income_family[gss_regression_df$income_family == "$100,000 to $ 124,999"] <- 5
+gss_regression_df$income_family[gss_regression_df$income_family == "$125,000 and more"] <- 6
+gss_regression_df$income_family <- as.numeric(gss_regression_df$income_family)
+
+```
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# Some independent t-tests. These are summarized in report as an image file.
+test_age <- t.test(gss_regression_df$age_respondent  ~ gss_regression_df$parents_divorced)
+test_number_unions <- t.test(gss_regression_df$total_unions  ~ gss_regression_df$parents_divorced)
+test_number_marriages <- t.test(gss_regression_df$number_marriages  ~ gss_regression_df$parents_divorced)
+test_number_separations <- t.test(gss_regression_df$number_separations  ~ gss_regression_df$parents_divorced)
+test_age_at_first_marriage <- t.test(gss_regression_df$age_at_first_marriage  ~ gss_regression_df$parents_divorced)
+test_age_at_first_birth <- t.test(gss_regression_df$age_at_first_birth  ~ gss_regression_df$parents_divorced)
+test_number_total_children_intention <- t.test(gss_regression_df$number_total_children_intention  ~ gss_regression_df$parents_divorced)
+test_total_children <- t.test(gss_regression_df$total_children  ~ gss_regression_df$parents_divorced)
+test_mother_contact <- t.test(gss_regression_df$mother_contact  ~ gss_regression_df$parents_divorced)
+test_father_contact <- t.test(gss_regression_df$father_contact  ~ gss_regression_df$parents_divorced)
+test_age_at_first_divorce <- t.test(gss_regression_df$age_at_first_divorce ~ gss_regression_df$parents_divorced)
+test_self_rated_health <- t.test(gss_regression_df$self_rated_health ~ gss_regression_df$parents_divorced)
+test_self_rated_mental_health <- t.test(gss_regression_df$self_rated_mental_health ~ gss_regression_df$parents_divorced)
+test_feelings_life <- t.test(gss_regression_df$feelings_life ~ gss_regression_df$parents_divorced)
+test_aboriginal <- t.test(gss_regression_df$aboriginal_dummy ~ gss_regression_df$parents_divorced)
+test_canadian_at_birth <- t.test(gss_regression_df$canadian_at_birth_dummy ~ gss_regression_df$parents_divorced)
+test_visible_minority <- t.test(gss_regression_df$minority_dummy ~ gss_regression_df$parents_divorced)
+test_has_religion <- t.test(gss_regression_df$has_religion ~ gss_regression_df$parents_divorced)
+test_income_respondent <- t.test(gss_regression_df$income_respondent ~ gss_regression_df$parents_divorced)
+test_income_family <- t.test(gss_regression_df$income_family ~ gss_regression_df$parents_divorced)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# We now run some OLS regressions.
+
+total_unions_reg <- lm(gss_regression_df$total_unions ~ gss_regression_df$parents_divorced_dummy +
+                           gss_regression_df$age_respondent + gss_regression_df$is_male +
+                           gss_regression_df$self_rated_mental_health +
+                           gss_regression_df$frequent_father_contact + 
+                           gss_regression_df$frequent_mother_contact +
+                           gss_regression_df$aboriginal_dummy +
+                           gss_regression_df$canadian_at_birth_dummy +
+                           gss_regression_df$minority_dummy +
+                           gss_regression_df$has_religion + 
+                           gss_regression_df$income_respondent)
+
+number_marriages_reg <- lm(gss_regression_df$number_marriages ~ gss_regression_df$parents_divorced_dummy +
+                           gss_regression_df$age_respondent + gss_regression_df$is_male +
+                           gss_regression_df$self_rated_mental_health +
+                           gss_regression_df$frequent_father_contact + 
+                           gss_regression_df$frequent_mother_contact +
+                           gss_regression_df$aboriginal_dummy +
+                           gss_regression_df$canadian_at_birth_dummy +
+                           gss_regression_df$minority_dummy +
+                           gss_regression_df$has_religion + 
+                           gss_regression_df$income_respondent)
+
+number_separations_reg <- lm(gss_regression_df$number_separations ~ gss_regression_df$parents_divorced_dummy +
+                           gss_regression_df$age_respondent + gss_regression_df$is_male +
+                           gss_regression_df$self_rated_mental_health +
+                           gss_regression_df$frequent_father_contact + 
+                           gss_regression_df$frequent_mother_contact +
+                           gss_regression_df$aboriginal_dummy +
+                           gss_regression_df$canadian_at_birth_dummy +
+                           gss_regression_df$minority_dummy +
+                           gss_regression_df$has_religion + 
+                           gss_regression_df$income_respondent)
+
+age_first_marriage_reg <- lm(gss_regression_df$age_at_first_marriage ~ 
+                                gss_regression_df$parents_divorced_dummy +
+                                gss_regression_df$age_respondent + 
+                                gss_regression_df$is_male + 
+                                gss_regression_df$self_rated_mental_health +
+                                gss_regression_df$frequent_father_contact + 
+                                gss_regression_df$frequent_mother_contact +
+                                gss_regression_df$aboriginal_dummy +
+                                gss_regression_df$canadian_at_birth_dummy +
+                                gss_regression_df$minority_dummy +
+                                gss_regression_df$has_religion + 
+                                gss_regression_df$income_respondent)
+
+age_first_divorce_reg <- lm(gss_regression_df$age_at_first_divorce ~ 
+                                gss_regression_df$parents_divorced_dummy +
+                                gss_regression_df$age_respondent + 
+                                gss_regression_df$is_male + 
+                                gss_regression_df$self_rated_mental_health +
+                                gss_regression_df$frequent_father_contact + 
+                                gss_regression_df$frequent_mother_contact +
+                                gss_regression_df$aboriginal_dummy +
+                                gss_regression_df$canadian_at_birth_dummy +
+                                gss_regression_df$minority_dummy +
+                                gss_regression_df$has_religion + 
+                                gss_regression_df$income_respondent)
+
+age_first_birth_reg <- lm(gss_regression_df$age_at_first_birth ~ 
+                                gss_regression_df$parents_divorced_dummy +
+                                gss_regression_df$age_respondent + 
+                                gss_regression_df$is_male + 
+                                gss_regression_df$self_rated_mental_health +
+                                gss_regression_df$frequent_father_contact + 
+                                gss_regression_df$frequent_mother_contact +
+                                gss_regression_df$aboriginal_dummy +
+                                gss_regression_df$canadian_at_birth_dummy +
+                                gss_regression_df$minority_dummy +
+                                gss_regression_df$has_religion + 
+                                gss_regression_df$income_respondent)
+
+
+```
+
+
+```{r, echo = FALSE, results = 'asis'}
+stargazer(total_unions_reg, number_marriages_reg, number_separations_reg, type='latex',
+          header=FALSE, 
+          title='OLS regression results suggest that parental divorce affects relationship behavior of offspring.', 
+          dep.var.labels=c('Number of unions', 'Number of marriages', 'Number of separations'),
+          report=('vc*p'),
+          digits=4,
+          digits.extra=1, 
+          notes.align = "c"
+          )
+```
+
+Table 1 displays the results of the OLS regressions predicting number of unions, number of marriages, and number of separations respectively. From the regression output we see that the majority of variables are significant at a level of 0.05 in each of the regressions. The “parents_divorced_dummy” variable is significant in all three models and has a positive influence on both number of unions and number of separations, but a slight negative influence on number of marriages. This may indicate that parental divorce deters children from pursuing marriage in their adult lives, or that individuals may be less likely to seek remarriage after a divorce (resulting in a lower total number of marriages) if their parents have been divorced. Due to its positive influence on number of unions in Model 1, it is possible that parental divorce influences children to pursue non-marriage partnerships in place of legal marriage. This contrasts the result from Figure 8 above. We also see that Model 3 indicates a slight positive influence of parental divorce on number of separations.
+
+
+```{r, echo = FALSE, results = 'asis'}
+stargazer(age_first_marriage_reg, age_first_divorce_reg, age_first_birth_reg, type='latex',
+          header=FALSE, 
+          title='OLS regression results suggest that parental divorce does not seem to affect the relationship timing of offspring.', 
+          dep.var.labels=c('Age at first marriage', 'Age at first divorce', 'Age at first birth'),
+          report=('vc*p'),
+          digits=4,
+          digits.extra=1, 
+          notes.align = "c"
+          )
+```
+
+Table 2 displays the results of OLS regressions predicting age at first marriage, age at first divorce, and age at first birth. Unlike the results in Table 1, parental divorce showed insignificant influence in the context of these models. Gender emerges as a significant factor in age at first marriage, along with aboriginal and visible minority status (all relatively large positive values). We see that every variable is significant at the level 0.05 in modelling age at first birth, except for parental divorce. While it is expected that these social factors would play a role in childbearing habits, this again contrasts our previous result seen in Figure 7. Age at first divorce does not appear to be heavily influenced by many of the variables in question.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# We now run some logit regressions. 
+# First, we prepare the dependent variables of interest.
+# The first variable we create is "divorced_separated_dummy" which equals to 1 if divorced/separated, and 0 if married.
+gss_regression_df <- gss_regression_df %>% mutate(divorced_separated_dummy = legal_marital_status)
+gss_regression_df$divorced_separated_dummy[gss_regression_df$divorced_separated_dummy == 1] <- 0
+gss_regression_df$divorced_separated_dummy[gss_regression_df$divorced_separated_dummy == 2] <- 1
+gss_regression_df$divorced_separated_dummy[gss_regression_df$divorced_separated_dummy == 3] <- 1
+gss_regression_df$divorced_separated_dummy[gss_regression_df$divorced_separated_dummy == 4] <- NA
+gss_regression_df$divorced_separated_dummy[gss_regression_df$divorced_separated_dummy == 5] <- NA
+gss_regression_df$divorced_separated_dummy[gss_regression_df$divorced_separated_dummy == 7] <- NA
+
+# Next, we convert "will_ever_marry" to a dummy variable which equals to 1 if respondent said definitely or probably yes, and 0 if respondent said definitely or probably no.
+gss_regression_df <- gss_regression_df %>% mutate(will_marry_dummy = will_ever_marry)
+gss_regression_df$will_marry_dummy[gss_regression_df$will_marry_dummy == 2] <- 1
+gss_regression_df$will_marry_dummy[gss_regression_df$will_marry_dummy == 3] <- 0
+gss_regression_df$will_marry_dummy[gss_regression_df$will_marry_dummy == 4] <- 0
+gss_regression_df$will_marry_dummy[gss_regression_df$will_marry_dummy == 5] <- NA
+gss_regression_df$will_marry_dummy[gss_regression_df$will_marry_dummy == 6] <- NA
+gss_regression_df$will_marry_dummy[gss_regression_df$will_marry_dummy == 7] <- NA
+gss_regression_df$will_marry_dummy[gss_regression_df$will_marry_dummy == 8] <- NA
+gss_regression_df$will_marry_dummy[gss_regression_df$will_marry_dummy == 9] <- NA
+
+# Then, we run the logit models.
+marital_status_logit <- glm(gss_regression_df$divorced_separated_dummy ~
+                               gss_regression_df$parents_divorced_dummy +
+                                gss_regression_df$age_respondent + 
+                                gss_regression_df$is_male + 
+                                gss_regression_df$self_rated_mental_health +
+                                gss_regression_df$frequent_father_contact + 
+                                gss_regression_df$frequent_mother_contact +
+                                gss_regression_df$aboriginal_dummy +
+                                gss_regression_df$canadian_at_birth_dummy +
+                                gss_regression_df$minority_dummy +
+                                gss_regression_df$has_religion + 
+                                gss_regression_df$income_respondent,
+                            family = binomial())
+
+ever_married_logit <- glm(gss_regression_df$ever_married_dummy ~
+                               gss_regression_df$parents_divorced_dummy +
+                                gss_regression_df$age_respondent + 
+                                gss_regression_df$is_male + 
+                                gss_regression_df$self_rated_mental_health +
+                                gss_regression_df$frequent_father_contact + 
+                                gss_regression_df$frequent_mother_contact +
+                                gss_regression_df$aboriginal_dummy +
+                                gss_regression_df$canadian_at_birth_dummy +
+                                gss_regression_df$minority_dummy +
+                                gss_regression_df$has_religion + 
+                                gss_regression_df$income_respondent,
+                            family = binomial())
+
+will_marry_logit <- glm(gss_regression_df$will_marry_dummy ~
+                               gss_regression_df$parents_divorced_dummy +
+                                gss_regression_df$age_respondent + 
+                                gss_regression_df$is_male + 
+                                gss_regression_df$self_rated_mental_health +
+                                gss_regression_df$frequent_father_contact + 
+                                gss_regression_df$frequent_mother_contact +
+                                gss_regression_df$aboriginal_dummy +
+                                gss_regression_df$canadian_at_birth_dummy +
+                                gss_regression_df$minority_dummy +
+                                gss_regression_df$has_religion + 
+                                gss_regression_df$income_respondent,
+                            family = binomial())
+
+```
+
+
+# Discussion and future work
+
+The hypothesis we proposed in the introduction of this report disclosed the ramifications of divorce seen elsewhere would be limited when examined in a Canadian context; this report, for the most part, confirmed this. Table 0 compared the average of each variable between divorced parents and married parents providing strong support that respondents differ marginally. Unexpectedly, when comparing respondents’ intent to marry, children of divorced parents intended to get married more so than children of married parents (see Figure 8). However, based on Table 1, the OLS regressions contrast these results as a negative influence is seen based on the variables influencing number of unions and number of separations, indicating that parental divorce may deter children from pursuing marriage or remarriage in the respondent’s adult lives. This may be due to the controls applied to the OLS regressions in Table 1, in contrast to the univariate modelling seen in Figure 8. Similarly, the OLS regression results in Table 2 show that control factors such as gender, national, and ethnic background play a more significant role in determining age of first birth than parental divorce. This contrasts the results of Figure 7.
+
+A couple of the variables expressed the universally common traits seen within divorced homes. This included Figure 1 and Figure 9 which modeled respondents’ current marital status and feelings of satisfaction towards life. Be that as it may, Table 0 denoted that the mean age for respondents who experienced parental divorce was younger. This may be a potential reason for why proportions for being single are higher among this group as opposed to the older-aged respondents whose parents were not divorced.This may also be due to differing marital habits between generations, such as younger people choosing to marry later in life. This may also be considered for the underlying confounders seen in Figures 4-9. 
+
+We did attempt to track the trends observed for respondent’s parental divorce by province, but the skew to higher amounts in provinces were likely due to the larger population size (see Figure 10). As Ontario has the greatest population, and PEI having the smallest population, it is expected that rates of divorce would be greatest in Ontario, and smallest in PEI.
+
+Weaknesses, aside from those touched on in the data section of this report, are due to limited variables measured. Supplementary variables that would provide a more accurate representation would be duration of marriage, separated (but not divorced) parents, reasons of divorce, context of divorce (employment, income, etc.), “low-stress” versus “high-stress” divorces, and child custody arrangements. Considering this, subsequent research and studies are encouraged in the future to establish a superior narrative about the effects of parental divorce in Canada.
+
+In the future, we wish to further our understanding of this topic by exploring how specific religions, minorities, ages, and locations will differ the magnitude of consequences caused by divorced homes in Canada. Since Canada is known for its diversity, we believe it is important to appropriately cover the heterogeneousness embedded in Canadian culture. Based on OLS regressions, we observed that both groups had similar demographic distributions in terms of aboriginal respondents, respondent’s religious affiliation, visible minority status and self rated physical and mental health. To avoid deterrence from our focus on relationship outlooks and habits, we decided to forgo these observations. Further extensive surveying is needed to track these trends among these variables, for a further in-depth holistic view.
+
+\newpage
+# References
+
+Allaire J, Xie Y, McPherson J, Luraschi J, Ushey K, Atkins A, Wickham H, Cheng J, Chang W, Iannone R (2020). rmarkdown: Dynamic Documents for R. R package version 2.4, https://github.com/rstudio/rmarkdown.
+
+Amato, P. R. (1996). Explaining the intergenerational transmission of divorce. Journal of Marriage and the Family, 58(3), 628–640. https://doi.org/10.2307/353723
+
+Amato, P. R., Booth, A. (1991). Consequences of parental divorce and marital unhappiness for adult well-being. Social forces, 69(3), 895-914.
+
+Amato, P. R., & Keith, B. (1991). Parental deivorce and adult well-being: A meta-analysis. Journal of Marriage and the Family, 43-58. 
+
+Arnold, Jeffrey B. (2019). ggthemes: Extra Themes, Scales and Geoms for ‘ggplot2’. R package version 4.2.0. https://CRAN.R-project.org/package=ggthemes
+
+Auguie, Baptiste  (2017). gridExtra: Miscellaneous Functions for "Grid" Graphics. R package version 2.3. https://CRAN.R-project.org/package=gridExtra
+
+Boyer-Pennington, M. E., Pennington, J., Spink, C. (2001). Students' Expectations and Optimism Toward Marriage as a Function of Parental Divorce. Journal of Divorce & Remarriage, 34(3-4), 71-87. https://doi.org/10.1300/J087v34n03_05
+
+Cherlin, A. J., Chase-Lansdale, P. L., McRae, C. (1998). Effects of parental divorce on mental health throughout the life course. American Sociological Review, 63(2), 239-249. https://doi.org/10.2307/2657325
+
+Firke, Sam (2020). janitor: Simple Tools for Examining and Cleaning Dirty Data. R package version 2.0.1. https://CRAN.R-project.org/package=janitor
+
+General Social Survey: An Overview, 2019. (2019, February 20) Statistics Canada. https://www150.statcan.gc.ca/n1/pub/89f0115x/89f0115x2019001-eng.htm
+
+Hlavac, M. (2018). stargazer: Well-Formatted Regression and Summary Statistics Tables. R package version 5.2.2. https://CRAN.R-project.org/package=stargazer
+
+Lawton, L. E., Bures, R. (2001). Parental divorce and the "switching" of religious identity. Journal for the Scientific Study of Religion, 40(1), 99–111. https://doi.org/10.1111/0021-8294.00041
+
+Stevenson, J. (2020, June 18). Canadian divorce rates expected to pass 38% average post-COVID-19. Toronto Sun. https://torontosun.com/news/national/canadian-divorce-rates-expected-to-pass-38-average-post-covid-19
+
+R Core Team (2020). R: A language and environment for statistical computing. R Foundation for Statistical Computing, Vienna, Austria. URL: https://www.R-project.org/.
+
+Rohan, A., & Caetano, S. (2020). ‘GSS 2017 Cleaning Code’. MIT License.
+
+Statistics Canada (2020). ‘2017 General Social Survey: Families Cycle 31 - Public Use Microdata File PUMF’. 
+
+Statistics Canada (2020). ‘2017 General Social Survey: Families Cycle 31 - Public Use Microdata File Documentation and User’s Guide’. 
+
+Stevenson, J. (2020, June 18). Canadian divorce rates expected to pass 38% average post-COVID-19. Toronto Sun. https://torontosun.com/news/national/canadian-divorce-rates-expected-to-pass-38-average-post-covid-19
+
+Wickham, Hadley (2016) ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York, 2016.
+
+Wickham, Hadley, et al. (2019). Welcome to the tidyverse. Journal of Open Source Software, 4(43), 1686,
+https://doi.org/10.21105/joss.01686
+
+Wickham, Hadley and Dana Seidel (2020). scales: Scale Functions for Visualization. R package version 1.1.1. https://CRAN.R-project.org/package=scales
+
+Williams, R. (2019, April 5). Ordinal Independent Variables. Retrieved October 19, 2020 from https://www3.nd.edu/~rwilliam/stats3/OrdinalIndependent.pdf
+
+Xie, Yihui (2020). knitr: A General-Purpose Package for Dynamic Report Generation in R. R package version 1.30.
+
+Xie, Yihui (2019) TinyTeX: A lightweight, cross-platform, and easy-to-maintain LaTeX distribution based on TeX Live. TUGboat 40 (1): 30--32. http://tug.org/TUGboat/Contents/contents40-1.html
+
+# Appendix
+In this appendix, we present results of our logistic regression model in Table 3 on the next page.
+
+```{r, echo = FALSE, results = 'asis'}
+stargazer(marital_status_logit, ever_married_logit, will_marry_logit, type='latex',
+          header=FALSE, 
+          title='Logit model results. In model (1), dependent variable takes the value of 0 if respondent is married, and a value of 1 if respondent is currently divorced or separated. Results suggest that that parental divorce does not affect current likelihood of respondent being divorced, nor does it affect the intention to ever get married. However, there is some evidence that parental divorce affects the likelihood that a respondent was ever previously married at the time of the survey.', 
+          dep.var.labels=c('Currently divorced/separated', 'Ever married', 'Intention to ever marry'),
+          report=('vc*p'),
+          digits=4,
+          digits.extra=1, 
+          notes.align = "c"
+          )
+```
